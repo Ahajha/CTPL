@@ -48,7 +48,7 @@ thread_pool::thread_pool()
 	this->init();
 }
 
-thread_pool::thread_pool(int n_threads)
+thread_pool::thread_pool(std::size_t n_threads)
 {
 	this->init();
 	
@@ -61,22 +61,22 @@ thread_pool::~thread_pool()
 	this->stop(true);
 }
 
-int thread_pool::size()
+std::size_t thread_pool::size()
 {
-	return static_cast<int>(this->threads.size());
+	return this->threads.size();
 }
 
-int thread_pool::n_idle()
+std::size_t thread_pool::n_idle()
 {
 	return this->_n_idle;
 }
 
-std::thread& thread_pool::get_thread(int id)
+std::thread& thread_pool::get_thread(std::size_t id)
 {
 	return *this->threads[id];
 }
 
-void thread_pool::resize(int n_threads)
+void thread_pool::resize(std::size_t n_threads)
 {
 	// One of these will be true if this->stop() has been called,
 	// resizing in that case would be pointless at best or incorrect at worst.

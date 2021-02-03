@@ -65,16 +65,16 @@ namespace ctpl
 		thread_pool();
 		
 		// Creates a thread pool with a given number of threads.
-		thread_pool(int n_threads);
+		thread_pool(std::size_t n_threads);
 		
 		// Waits for all the functions in the queue to be finished, then stops.
 		~thread_pool();
 		
 		// Returns the number of running threads in the pool.
-		int size();
+		std::size_t size();
 		
 		// Returns the number of idle threads.
-		int n_idle();
+		std::size_t n_idle();
 		
 		// Returns a reference to the thread with a given ID.
 		std::thread& get_thread(int id);
@@ -82,7 +82,7 @@ namespace ctpl
 		// Changes the number of threads in the pool. Should be called
 		// from one thread, otherwise be careful to not interleave with
 		// this or this->stop(). Requires n_threads >= 0.
-		void resize(int n_threads);
+		void resize(std::size_t n_threads);
 		
 		// Clears the task queue.
 		void clear_queue();
@@ -143,7 +143,7 @@ namespace ctpl
 		std::atomic<bool> done, stopped;
 		
 		// The number of currently idle threads.
-		std::atomic<int> _n_idle;
+		std::atomic<std::size_t> _n_idle;
 		
 		// Mutex used for most atomic operations in the thread pool, other than
 		// those related to the task queue.
