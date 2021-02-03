@@ -80,49 +80,48 @@ void thread_pool::resize(std::size_t n_threads)
 {
 	// One of these will be true if this->stop() has been called,
 	// resizing in that case would be pointless at best or incorrect at worst.
-	if (!this->stopped && !this->done)
+	if (this->stopped || this->done) return;
+	
+	const std::size_t old_n_threads = this->threads.size();
+	
+	// If the number of threads stays the same or increases
+	if (old_n_threads <= n_threads)
 	{
-		const std::size_t old_n_threads = this->threads.size();
+		// Add threads and flags
+		this->threads.resize(n_threads);
+		this->stop_flags.resize(n_threads);
 		
-		// If the number of threads stays the same or increases
-		if (old_n_threads <= n_threads)
+		// Start up all threads into their main loops.
+		for (std::size_t i = old_n_threads; i < n_threads; ++i)
 		{
-			// Add threads and flags
-			this->threads.resize(n_threads);
-			this->stop_flags.resize(n_threads);
-			
-			// Start up all threads into their main loops.
-			for (std::size_t i = old_n_threads; i < n_threads; ++i)
-			{
-				this->stop_flags[i] = std::make_shared<std::atomic<bool>>(false);
-				this->start_thread(i);
-			}
+			this->stop_flags[i] = std::make_shared<std::atomic<bool>>(false);
+			this->start_thread(i);
 		}
-		else // the number of threads is decreased
+	}
+	else // the number of threads is decreased
+	{
+		// For each thread to be removed
+		for (std::size_t i = n_threads; i < old_n_threads; ++i)
 		{
-			// For each thread to be removed
-			for (std::size_t i = n_threads; i < old_n_threads; ++i)
-			{
-				// Tell the thread to finish its current task
-				// (if it has one) and stop. Detach the thread, since
-				// there is no need to wait for it to finish (join).
-				*this->stop_flags[i] = true;
-				this->threads[i]->detach();
-			}
-			{
-				// Stop any detached threads that were waiting.
-				// All other detached threads will eventually stop.
-				std::unique_lock<std::mutex> lock(this->mut);
-				this->signal.notify_all();
-			}
-			
-			// Safe to delete because the threads are detached.
-			this->threads.resize(n_threads);
-			
-			// Safe to delete because the threads have copies of
-			// the shared pointers to their respective flags, not originals.
-			this->stop_flags.resize(n_threads);
+			// Tell the thread to finish its current task
+			// (if it has one) and stop. Detach the thread, since
+			// there is no need to wait for it to finish (join).
+			*this->stop_flags[i] = true;
+			this->threads[i]->detach();
 		}
+		{
+			// Stop any detached threads that were waiting.
+			// All other detached threads will eventually stop.
+			std::unique_lock<std::mutex> lock(this->mut);
+			this->signal.notify_all();
+		}
+		
+		// Safe to delete because the threads are detached.
+		this->threads.resize(n_threads);
+		
+		// Safe to delete because the threads have copies of
+		// the shared pointers to their respective flags, not originals.
+		this->stop_flags.resize(n_threads);
 	}
 }
 
