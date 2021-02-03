@@ -1,8 +1,6 @@
-#include <ctpl.h>
+#include "ctpl_stl.h"
 #include <iostream>
 #include <string>
-
-
 
 void first(int id) {
     std::cout << "hello from " << id << ", function\n";
@@ -28,6 +26,18 @@ void ugu(int id, Third & t) {
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     std::cout << "hello from " << id << ", function with parameter Third " << t.v <<'\n';
 }
+
+struct A
+{
+	A() { std::cout << "Default constructor\n"; }
+	~A() { std::cout << "Destructor\n"; }
+	A(A&&) { std::cout << "Move constructor\n"; }
+	A(const A&) { std::cout << "Copy constructor\n"; }
+	A& operator=(A&&) { std::cout << "Move assignment\n"; return *this; }
+	A& operator=(const A&) { std::cout << "Copy assignment\n"; return *this; }
+};
+
+void fA(int, const A&) { std::cout << "got an A\n"; }
 
 int main(int argc, char **argv) {
     ctpl::thread_pool p(2 /* two threads in the pool */);
@@ -61,10 +71,11 @@ int main(int argc, char **argv) {
 
             p.push(ugu, std::ref(t));  // function. reference
             p.push(ugu, t);  // function. copy ctor, move ctor
-            p.push(ugu, std::move(t));  // function. move ctor, move ctor
+            //p.push(ugu, std::move(t));  // function. move ctor, move ctor
 
         }
-        p.push(ugu, Third(200));  // function
+        
+        //p.push(ugu, Third(200));  // function
 
 
 
@@ -112,6 +123,11 @@ int main(int argc, char **argv) {
 
     // get thread 0
     auto & th = p.get_thread(0);
-
+    
+    // Test perfect forwarding.
+    p.push(fA, A{});
+    A a;
+    p.push(fA, a);
+    
     return 0;
 }
