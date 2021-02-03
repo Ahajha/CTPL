@@ -37,7 +37,7 @@ bool detail::atomic_queue<T>::pop(T & value)
 }
 
 template <typename T>
-bool detail::atomic_queue<T>::empty()
+bool detail::atomic_queue<T>::empty() const
 {
 	std::unique_lock<std::mutex> lock(this->mut);
 	return this->q.empty();
@@ -61,12 +61,12 @@ thread_pool::~thread_pool()
 	this->stop(true);
 }
 
-std::size_t thread_pool::size()
+std::size_t thread_pool::size() const
 {
 	return this->threads.size();
 }
 
-std::size_t thread_pool::n_idle()
+std::size_t thread_pool::n_idle() const
 {
 	return this->_n_idle;
 }

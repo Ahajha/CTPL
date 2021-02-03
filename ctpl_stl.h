@@ -51,7 +51,7 @@ namespace ctpl
 		// into 'value' and returns true. Otherwise returns false.
 		bool pop(T & value);
 		
-		bool empty();
+		bool empty() const;
 	private:
 		std::queue<T> q;
 		std::mutex mut;
@@ -71,10 +71,10 @@ namespace ctpl
 		~thread_pool();
 		
 		// Returns the number of running threads in the pool.
-		std::size_t size();
+		std::size_t size() const;
 		
 		// Returns the number of idle threads.
-		std::size_t n_idle();
+		std::size_t n_idle() const;
 		
 		// Returns a reference to the thread with a given ID.
 		std::thread& get_thread(std::size_t id);
