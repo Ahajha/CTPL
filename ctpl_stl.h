@@ -39,86 +39,118 @@ namespace ctpl
 {
 	namespace detail
 	{
+	// A mutex-locked std::queue wrapper, with minor
+	// modifications to the functionality of pop().
 	template <typename T>
-	class Queue
+	class atomic_queue
 	{
 	public:
 		bool push(T const & value);
 		
-		// deletes the retrieved element, do not use for non integral types
-		bool pop(T & v);
+		// If there is an item in the queue, pops the first item
+		// into 'value' and returns true. Otherwise returns false.
+		bool pop(T & value);
 		
 		bool empty();
 	private:
 		std::queue<T> q;
-		std::mutex mutex;
+		std::mutex mut;
 	};
 	}
 	
 	class thread_pool
 	{
 	public:
+		// Creates a thread pool with no threads.
 		thread_pool();
-		thread_pool(int nThreads);
 		
-		// the destructor waits for all the functions in the queue to be finished
+		// Creates a thread pool with a given number of threads.
+		thread_pool(int n_threads);
+		
+		// Waits for all the functions in the queue to be finished, then stops.
 		~thread_pool();
 		
-		// get the number of running threads in the pool
+		// Returns the number of running threads in the pool.
 		int size();
 		
-		// number of idle threads
+		// Returns the number of idle threads.
 		int n_idle();
-		std::thread & get_thread(int i);
 		
-		// change the number of threads in the pool
-		// should be called from one thread, otherwise be careful to not
-		// interleave, also with this->stop()
-		// nThreads must be >= 0
-		void resize(int nThreads);
+		// Returns a reference to the thread with a given ID.
+		std::thread& get_thread(int id);
 		
-		// empty the queue
+		// Changes the number of threads in the pool. Should be called
+		// from one thread, otherwise be careful to not interleave with
+		// this or this->stop(). Requires n_threads >= 0.
+		void resize(int n_threads);
+		
+		// Clears the task queue.
 		void clear_queue();
 		
-		// pops a functional wrapper to the original function
+		// Pops the next task in the queue, wrapped as a function with
+		// signature void(int), which expects the thread ID as an argument.
 		std::function<void(int)> pop();
 		
-		// wait for all computing threads to finish and stop all threads
-		// may be called asynchronously to not pause the calling thread while
-		// waiting. if isWait == true, all the functions in the queue are run,
-		// otherwise the queue is cleared without running the functions
-		void stop(bool isWait = false);
+		// Wait for all computing threads to finish, stops all threads, and
+		// releases all resources. May be called asynchronously to not pause
+		// the calling thread while waiting. If finish == true, all the tasks
+		// in the queue are run, otherwise the threads will only finish their
+		// current tasks, if they have any, and any tasks in the queue are
+		// removed. Note that the pool does not support being restarted.
+		void stop(bool finish = false);
 		
+		// Pushes a function and its arguments to the task queue. The function
+		// must accept an int as its first argument, the thread ID, all other
+		// arguments must be supplied to the call to push. Returns the future
+		// result of the function call, which allows the user to get the result
+		// when it is ready or manage any caught exceptions.
 		template<typename F, typename... Rest>
 		auto push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))>;
-		
-		// run the user's function that excepts argument int - id of the
-		// running thread. returned value is templatized. operator returns
-		// std::future, where the user can get the result and rethrow the
-		// catched exceptins.
 		template<typename F>
 		auto push(F && f) -> std::future<decltype(f(0))>;
 		
 	private:
-		// deleted
+		// Copying or moving a thread pool doesn't make
+		// much sense, so disable those actions.
 		thread_pool(const thread_pool &);// = delete;
 		thread_pool(thread_pool &&);// = delete;
 		thread_pool & operator=(const thread_pool &);// = delete;
 		thread_pool & operator=(thread_pool &&);// = delete;
 		
-		void set_thread(int i);
+		// Starts a thread at a given index into its main loop.
+		void start_thread(int id);
 		
+		// Helper function for the constructors.
 		void init();
 		
+		// Vector of threads and their stop flags. The stop flags
+		// start false, and should be set to true if the thread at
+		// the same index should be commanded to stop. These vectors
+		// should be the same size at all times, sans during resizing.
 		std::vector<std::unique_ptr<std::thread>> threads;
-		std::vector<std::shared_ptr<std::atomic<bool>>> flags;
-		detail::Queue<std::function<void(int id)> *> q;
-		std::atomic<bool> isDone;
-		std::atomic<bool> isStop;
-		std::atomic<int> nWaiting;  // how many threads are waiting
+		std::vector<std::shared_ptr<std::atomic<bool>>> stop_flags;
 		
-		std::mutex mutex;
-		std::condition_variable cv;
+		// Queue of tasks to be completed. Note that this queue is managed
+		// by a different mutex than the one used by all other thread pool
+		// actions.
+		detail::atomic_queue<std::function<void(int id)> *> tasks;
+		
+		// 'Done' is true if this->stop(true) has been called, signals
+		// for waiting threads to stop waiting for new jobs.
+		// 'Stopped' is true if this->stop(false) has been called, indicates
+		// that the thread pool has been stopped.
+		// Note that one of these will be true iff this->stop() has been called.
+		std::atomic<bool> done, stopped;
+		
+		// The number of currently idle threads.
+		std::atomic<int> _n_idle;
+		
+		// Mutex used for most atomic operations in the thread pool, other than
+		// those related to the task queue.
+		std::mutex mut;
+		
+		// Used for waking up threads that are waiting for tasks.
+		std::condition_variable signal;
 	};
 
 #include "tpp/ctpl_stl.tpp"
