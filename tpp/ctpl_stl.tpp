@@ -196,15 +196,31 @@ void thread_pool::stop(bool finish)
 template<typename F, typename... Rest>
 auto thread_pool::push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))>
 {
-	// std::forward is used to ensure perfect forwarding of rvalues where necessary.
-	// std::bind is used to make a function with 1 argument (int id) that
-	//     simulates calling f with its respective arguments.
-	// std::packaged_task is used to get a future out of the function call.
 	auto pck = std::make_shared<std::packaged_task<decltype(f(0, rest...))(int)>>(
-		std::bind(std::forward<F>(f), std::placeholders::_1, std::forward<Rest>(rest)...)
+		// This has been tested to ensure perfect forwarding still occurs with
+		// the parameters captured by reference.
+		[&f,&rest...]
+		{
+			if constexpr (sizeof...(rest) == 0)
+			{
+				// Only need to forward the function.
+				return std::forward<F>(f);
+			}
+			else
+			{
+				// std::forward is used to ensure perfect
+				// forwarding of rvalues where necessary.
+				// std::bind is used to make a function with 1 argument (int id)
+				//     that simulates calling f with its respective arguments.
+				// std::packaged_task is used to get a future out of the function call.
+				return std::bind(std::forward<F>(f),
+					std::placeholders::_1, std::forward<Rest>(rest)...);
+			}
+		}()
 	);
 	
-	// Lastly, create a function that wraps the packaged task into a signature of void(int).
+	// Lastly, create a function that wraps the packaged
+	// task into a signature of void(int).
 	auto task = new std::function<void(int id)>([pck](int id) {
 		(*pck)(id);
 	});
@@ -216,25 +232,8 @@ auto thread_pool::push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest
 	std::unique_lock<std::mutex> lock(this->mut);
 	this->signal.notify_one();
 	
-	// Return the future, the user is now responsible for the return value of the task.
-	return pck->get_future();
-}
-
-template<typename F>
-auto thread_pool::push(F && f) -> std::future<decltype(f(0))>
-{
-	// The main difference here is since there are no parameters to bind, many of
-	// the steps can be skipped.
-	auto pck = std::make_shared<std::packaged_task<decltype(f(0))(int)>>(std::forward<F>(f));
-	
-	// Everything below is the same as the other version of push().
-	auto task = new std::function<void(int id)>([pck](int id)
-	{
-		(*pck)(id);
-	});
-	this->tasks.push(task);
-	std::unique_lock<std::mutex> lock(this->mut);
-	this->signal.notify_one();
+	// Return the future, the user is now responsible
+	// for the return value of the task.
 	return pck->get_future();
 }
 

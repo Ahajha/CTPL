@@ -106,8 +106,6 @@ namespace ctpl
 		// when it is ready or manage any caught exceptions.
 		template<typename F, typename... Rest>
 		auto push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))>;
-		template<typename F>
-		auto push(F && f) -> std::future<decltype(f(0))>;
 		
 	private:
 		// Copying or moving a thread pool doesn't make
