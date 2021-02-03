@@ -72,7 +72,8 @@ namespace ctpl
 		std::thread & get_thread(int i);
 		
 		// change the number of threads in the pool
-		// should be called from one thread, otherwise be careful to not interleave, also with this->stop()
+		// should be called from one thread, otherwise be careful to not
+		// interleave, also with this->stop()
 		// nThreads must be >= 0
 		void resize(int nThreads);
 		
@@ -83,15 +84,18 @@ namespace ctpl
 		std::function<void(int)> pop();
 		
 		// wait for all computing threads to finish and stop all threads
-		// may be called asynchronously to not pause the calling thread while waiting
-		// if isWait == true, all the functions in the queue are run, otherwise the queue is cleared without running the functions
+		// may be called asynchronously to not pause the calling thread while
+		// waiting. if isWait == true, all the functions in the queue are run,
+		// otherwise the queue is cleared without running the functions
 		void stop(bool isWait = false);
 		
 		template<typename F, typename... Rest>
 		auto push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))>;
 		
-		// run the user's function that excepts argument int - id of the running thread. returned value is templatized
-		// operator returns std::future, where the user can get the result and rethrow the catched exceptins
+		// run the user's function that excepts argument int - id of the
+		// running thread. returned value is templatized. operator returns
+		// std::future, where the user can get the result and rethrow the
+		// catched exceptins.
 		template<typename F>
 		auto push(F && f) -> std::future<decltype(f(0))>;
 		

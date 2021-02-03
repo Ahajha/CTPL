@@ -104,7 +104,8 @@ void thread_pool::resize(int nThreads)
 			}
 			// safe to delete because the threads are detached
 			this->threads.resize(nThreads);
-			// safe to delete because the threads have copies of shared_ptr of the flags, not originals
+			// safe to delete because the threads have copies of
+			// shared_ptr of the flags, not originals
 			this->flags.resize(nThreads);
 		}
 	}
@@ -121,7 +122,8 @@ std::function<void(int)> thread_pool::pop()
 {
 	std::function<void(int id)> * _f = nullptr;
 	this->q.pop(_f);
-	std::unique_ptr<std::function<void(int id)>> func(_f); // at return, delete the function even if an exception occurred
+	// at return, delete the function even if an exception occurred
+	std::unique_ptr<std::function<void(int id)>> func(_f);
 	std::function<void(int)> f;
 	if (_f)
 		f = *_f;
@@ -158,7 +160,8 @@ void thread_pool::stop(bool isWait)
 		if (this->threads[i]->joinable())
 			this->threads[i]->join();
 	}
-	// if there were no threads in the pool but some functors in the queue, the functors are not deleted by the threads
+	// if there were no threads in the pool but some functors in the
+	// queue, the functors are not deleted by the threads
 	// therefore delete them here
 	this->clear_queue();
 	this->threads.clear();
@@ -196,7 +199,8 @@ auto thread_pool::push(F && f) ->std::future<decltype(f(0))>
 
 void thread_pool::set_thread(int i)
 {
-	std::shared_ptr<std::atomic<bool>> flag(this->flags[i]); // a copy of the shared ptr to the flag
+	// a copy of the shared ptr to the flag
+	std::shared_ptr<std::atomic<bool>> flag(this->flags[i]);
 	auto f = [this, i, flag/* a copy of the shared ptr to the flag */]()
 	{
 		std::atomic<bool> & _flag = *flag;
@@ -211,20 +215,30 @@ void thread_pool::set_thread(int i)
 				std::unique_ptr<std::function<void(int id)>> func(_f);
 				(*_f)(i);
 				if (_flag)
-					return; // the thread is wanted to stop, return even if the queue is not empty yet
+					// the thread is wanted to stop, return even
+					// if the queue is not empty yet
+					return;
 				else
 					isPop = this->q.pop(_f);
 			}
 			// the queue is empty here, wait for the next command
 			std::unique_lock<std::mutex> lock(this->mutex);
 			++this->nWaiting;
-			this->cv.wait(lock, [this, &_f, &isPop, &_flag](){ isPop = this->q.pop(_f); return isPop || this->isDone || _flag; });
+			this->cv.wait(lock, [this, &_f, &isPop, &_flag]()
+			{
+				isPop = this->q.pop(_f);
+				return isPop || this->isDone || _flag;
+			});
+			
 			--this->nWaiting;
 			if (!isPop)
-				return; // if the queue is empty and this->isDone == true or *flag then return
+				// if the queue is empty and
+				// this->isDone == true or *flag then return
+				return;
 		}
 	};
-	this->threads[i].reset(new std::thread(f)); // compiler may not support std::make_unique()
+	// compiler may not support std::make_unique()
+	this->threads[i].reset(new std::thread(f));
 }
 
 void thread_pool::init()
