@@ -120,9 +120,6 @@ namespace ctpl
 		// Starts a thread at a given index into its main loop.
 		void start_thread(int id);
 		
-		// Helper function for the constructors.
-		void init();
-		
 		// Vector of threads and their stop flags. The stop flags
 		// start false, and should be set to true if the thread at
 		// the same index should be commanded to stop. These vectors

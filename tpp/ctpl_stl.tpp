@@ -43,15 +43,10 @@ bool detail::atomic_queue<T>::empty() const
 	return this->q.empty();
 }
 
-thread_pool::thread_pool()
-{
-	this->init();
-}
+thread_pool::thread_pool() : done(false), stopped(false), _n_idle(0) {}
 
-thread_pool::thread_pool(std::size_t n_threads)
+thread_pool::thread_pool(std::size_t n_threads) : thread_pool()
 {
-	this->init();
-	
 	// Starts with 0 threads, resize.
 	this->resize(n_threads);
 }
@@ -312,9 +307,4 @@ void thread_pool::start_thread(int id)
 	// Compilers (at the time the code was written)
 	// may not support std::make_unique().
 	this->threads[id].reset(new std::thread(loop));
-}
-
-void thread_pool::init()
-{
-	this->_n_idle = 0; this->stopped = false; this->done = false;
 }
