@@ -77,7 +77,7 @@ namespace ctpl
 		std::size_t n_idle();
 		
 		// Returns a reference to the thread with a given ID.
-		std::thread& get_thread(int id);
+		std::thread& get_thread(std::size_t id);
 		
 		// Changes the number of threads in the pool. Should be called
 		// from one thread, otherwise be careful to not interleave with
