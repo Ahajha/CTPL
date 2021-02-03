@@ -162,9 +162,9 @@ void thread_pool::stop(bool finish)
 		this->stopped = true;
 		
 		// Command all threads to stop
-		for (int i = 0, n = this->size(); i < n; ++i)
+		for (auto& stop_flag : this->stop_flags)
 		{
-			*this->stop_flags[i] = true;
+			*stop_flag = true;
 		}
 		
 		// Remove any remaining tasks.
@@ -186,10 +186,10 @@ void thread_pool::stop(bool finish)
 	}
 	
 	// Wait for the computing threads to finish
-	for (int i = 0; i < static_cast<int>(this->threads.size()); ++i)
+	for (auto& thr : this->threads)
 	{
-		if (this->threads[i]->joinable())
-			this->threads[i]->join();
+		if (thr->joinable())
+			thr->join();
 	}
 	
 	// Release all resources.
