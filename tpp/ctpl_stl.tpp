@@ -82,7 +82,7 @@ void thread_pool::resize(std::size_t n_threads)
 	// resizing in that case would be pointless at best or incorrect at worst.
 	if (!this->stopped && !this->done)
 	{
-		int old_n_threads = static_cast<int>(this->threads.size());
+		const std::size_t old_n_threads = this->threads.size();
 		
 		// If the number of threads stays the same or increases
 		if (old_n_threads <= n_threads)
@@ -92,7 +92,7 @@ void thread_pool::resize(std::size_t n_threads)
 			this->stop_flags.resize(n_threads);
 			
 			// Start up all threads into their main loops.
-			for (int i = old_n_threads; i < n_threads; ++i)
+			for (std::size_t i = old_n_threads; i < n_threads; ++i)
 			{
 				this->stop_flags[i] = std::make_shared<std::atomic<bool>>(false);
 				this->start_thread(i);
@@ -101,7 +101,7 @@ void thread_pool::resize(std::size_t n_threads)
 		else // the number of threads is decreased
 		{
 			// For each thread to be removed
-			for (int i = old_n_threads - 1; i >= n_threads; --i)
+			for (std::size_t i = n_threads; i < old_n_threads; ++i)
 			{
 				// Tell the thread to finish its current task
 				// (if it has one) and stop. Detach the thread, since
