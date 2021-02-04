@@ -105,6 +105,7 @@ namespace ctpl
 		// result of the function call, which allows the user to get the result
 		// when it is ready or manage any caught exceptions.
 		template<typename F, typename... Rest>
+			requires std::invocable<F,int,Rest...>
 		auto push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))>;
 		
 	private:

@@ -194,6 +194,7 @@ void thread_pool::stop(bool finish)
 }
 
 template<typename F, typename... Rest>
+	requires std::invocable<F,int,Rest...>
 auto thread_pool::push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))>
 {
 	auto pck = std::make_shared<std::packaged_task<decltype(f(0, rest...))(int)>>(
