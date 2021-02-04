@@ -254,11 +254,10 @@ void thread_pool::start_thread(int id)
 				
 				// The thread is wanted to stop, return even
 				// if the queue is not empty yet
-				if (stop)
-					return;
-				else
-					// Get a new task
-					has_new_task = this->tasks.pop(task);
+				if (stop) return;
+				
+				// Get a new task
+				has_new_task = this->tasks.pop(task);
 			}
 			// At this point the queue has run out of tasks, wait here for more.
 			std::unique_lock<std::mutex> lock(this->mut);
@@ -285,8 +284,7 @@ void thread_pool::start_thread(int id)
 			
 			// if the queue is empty and it was able to stop waiting, then
 			// that means the thread was told to stop, so stop.
-			if (!has_new_task)
-				return;
+			if (!has_new_task) return;
 		}
 	};
 	// Compilers (at the time the code was written)
