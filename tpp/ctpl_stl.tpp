@@ -20,7 +20,7 @@
 template <typename T>
 bool detail::atomic_queue<T>::push(T&& value)
 {
-	std::unique_lock<std::mutex> lock(this->mut);
+	std::lock_guard<std::mutex> lock(this->mut);
 	this->q.push(std::forward<T>(value));
 	return true;
 }
@@ -28,7 +28,7 @@ bool detail::atomic_queue<T>::push(T&& value)
 template <typename T>
 bool detail::atomic_queue<T>::pop(T & value)
 {
-	std::unique_lock<std::mutex> lock(this->mut);
+	std::lock_guard<std::mutex> lock(this->mut);
 	if (this->q.empty())
 		return false;
 	value = std::move(this->q.front());
@@ -39,7 +39,7 @@ bool detail::atomic_queue<T>::pop(T & value)
 template <typename T>
 bool detail::atomic_queue<T>::empty() const
 {
-	std::unique_lock<std::mutex> lock(this->mut);
+	std::lock_guard<std::mutex> lock(this->mut);
 	return this->q.empty();
 }
 
@@ -107,7 +107,7 @@ void thread_pool::resize(std::size_t n_threads)
 		{
 			// Stop any detached threads that were waiting.
 			// All other detached threads will eventually stop.
-			std::unique_lock<std::mutex> lock(this->mut);
+			std::lock_guard<std::mutex> lock(this->mut);
 			this->signal.notify_all();
 		}
 		
@@ -143,8 +143,8 @@ void thread_pool::stop(bool finish)
 		// If this->stop(false) has already been called, no need to stop again.
 		// If this->stop(true) has alredy been called, still continue, as this
 		// will stop the completion of the rest of the tasks in the queue.
-		if (this->stopped)
-			return;
+		if (this->stopped) return;
+		
 		this->stopped = true;
 		
 		// Command all threads to stop
@@ -159,15 +159,14 @@ void thread_pool::stop(bool finish)
 	else // Let the threads continue
 	{
 		// If this->stop() has been already been called, no need to stop again.
-		if (this->done || this->stopped)
-			return;
+		if (this->done || this->stopped) return;
 		
 		// Give the waiting threads a command to finish
 		this->done = true;
 	}
 	{
 		// Stop all waiting threads
-		std::unique_lock<std::mutex> lock(this->mut);
+		std::lock_guard<std::mutex> lock(this->mut);
 		this->signal.notify_all();
 	}
 	
@@ -220,7 +219,7 @@ std::future<std::invoke_result_t<F,int,Rest...>>
 	);
 	
 	// Notify one waiting thread so it can wake up and take this new task.
-	std::unique_lock<std::mutex> lock(this->mut);
+	std::lock_guard<std::mutex> lock(this->mut);
 	this->signal.notify_one();
 	
 	// Return the future, the user is now responsible
