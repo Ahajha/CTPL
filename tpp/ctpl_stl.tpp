@@ -43,6 +43,13 @@ bool detail::atomic_queue<T>::empty() const
 	return this->q.empty();
 }
 
+template <typename T>
+void detail::atomic_queue<T>::clear()
+{
+	std::lock_guard<std::mutex> lock(this->mut);
+	while (!this->q.empty()) this->q.pop();
+}
+
 thread_pool::thread_pool() : done(false), stopped(false), _n_idle(0) {}
 
 thread_pool::thread_pool(std::size_t n_threads) : thread_pool()
@@ -122,8 +129,7 @@ void thread_pool::resize(std::size_t n_threads)
 
 void thread_pool::clear_queue()
 {
-	std::unique_ptr<std::function<void(int id)>> _f;
-	while (this->tasks.pop(_f)) {}
+	this->tasks.clear();
 }
 
 std::function<void(int)> thread_pool::pop()

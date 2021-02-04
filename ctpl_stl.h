@@ -52,6 +52,8 @@ namespace ctpl
 		bool pop(T & value);
 		
 		bool empty() const;
+		
+		void clear();
 	private:
 		std::queue<T> q;
 		std::mutex mut;
