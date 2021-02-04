@@ -45,7 +45,7 @@ namespace ctpl
 	class atomic_queue
 	{
 	public:
-		bool push(T const & value);
+		bool push(T&& value);
 		
 		// If there is an item in the queue, pops the first item
 		// into 'value' and returns true. Otherwise returns false.
@@ -130,7 +130,7 @@ namespace ctpl
 		// Queue of tasks to be completed. Note that this queue is managed
 		// by a different mutex than the one used by all other thread pool
 		// actions.
-		detail::atomic_queue<std::function<void(int id)> *> tasks;
+		detail::atomic_queue<std::unique_ptr<std::function<void(int id)>>> tasks;
 		
 		// 'Done' is true if this->stop(true) has been called, signals
 		// for waiting threads to stop waiting for new jobs.

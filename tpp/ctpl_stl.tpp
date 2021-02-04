@@ -18,10 +18,10 @@
 *********************************************************/
 
 template <typename T>
-bool detail::atomic_queue<T>::push(T const & value)
+bool detail::atomic_queue<T>::push(T&& value)
 {
 	std::unique_lock<std::mutex> lock(this->mut);
-	this->q.push(value);
+	this->q.push(std::forward<T>(value));
 	return true;
 }
 
@@ -31,7 +31,7 @@ bool detail::atomic_queue<T>::pop(T & value)
 	std::unique_lock<std::mutex> lock(this->mut);
 	if (this->q.empty())
 		return false;
-	value = this->q.front();
+	value = std::move(this->q.front());
 	this->q.pop();
 	return true;
 }
@@ -122,26 +122,17 @@ void thread_pool::resize(std::size_t n_threads)
 
 void thread_pool::clear_queue()
 {
-	std::function<void(int id)> * _f;
-	while (this->tasks.pop(_f))
-		// The functions were allocated with new, so they should be deleted.
-		delete _f;
+	std::unique_ptr<std::function<void(int id)>> _f;
+	while (this->tasks.pop(_f)) {}
 }
 
 std::function<void(int)> thread_pool::pop()
 {
-	std::function<void(int id)> * _f = nullptr;
-	this->tasks.pop(_f);
+	std::unique_ptr<std::function<void(int id)>> func;
 	
-	// At return, delete the function even if an exception occurred
-	// This takes over the raw pointer and lets RAII take over cleanup.
-	std::unique_ptr<std::function<void(int id)>> func(_f);
-	std::function<void(int)> f;
-	if (_f)
-		// The heap-allocated function will be deleted, so copy it
-		// to the stack to be returned.
-		f = *_f;
-	return f;
+	// Returns by value, so copies and deletes the heap allocated function,
+	// if there is one in the queue.
+	return this->tasks.pop(func) ? *func : std::function<void(int)>{};
 }
 
 void thread_pool::stop(bool finish)
@@ -224,12 +215,9 @@ std::future<std::invoke_result_t<F,int,Rest...>>
 	
 	// Lastly, create a function that wraps the packaged
 	// task into a signature of void(int).
-	auto task = new std::function<void(int id)>([pck](int id) {
-		(*pck)(id);
-	});
-	
-	// Add the task to the queue
-	this->tasks.push(task);
+	this->tasks.push(std::make_unique<std::function<void(int)>>
+		([pck](int id) { (*pck)(id); })
+	);
 	
 	// Notify one waiting thread so it can wake up and take this new task.
 	std::unique_lock<std::mutex> lock(this->mut);
@@ -249,7 +237,7 @@ void thread_pool::start_thread(int id)
 		std::atomic<bool> & stop = *stop_flag;
 		
 		// Used to store new tasks.
-		std::function<void(int id)> * task;
+		std::unique_ptr<std::function<void(int id)>> task;
 		
 		// True if 'task' currently has a runnable task in it.
 		bool has_new_task = this->tasks.pop(task);
@@ -258,13 +246,11 @@ void thread_pool::start_thread(int id)
 			// If there is a task to run
 			while (has_new_task)
 			{
-				// At return, delete the function even if an exception occurred.
-				// This takes over the raw pointer and lets RAII take care of
-				// cleanup.
-				std::unique_ptr<std::function<void(int id)>> func(task);
-				
 				// Run the task
 				(*task)(id);
+				
+				// Delete the task
+				task.reset();
 				
 				// The thread is wanted to stop, return even
 				// if the queue is not empty yet
