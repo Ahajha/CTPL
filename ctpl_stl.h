@@ -42,9 +42,8 @@ namespace ctpl
 	// A mutex-locked std::queue wrapper, with minor
 	// modifications to the functionality of pop().
 	template <typename T>
-	class atomic_queue
+	struct atomic_queue
 	{
-	public:
 		bool push(T&& value);
 		
 		// If there is an item in the queue, pops the first item
@@ -60,9 +59,8 @@ namespace ctpl
 	};
 	}
 	
-	class thread_pool
+	struct thread_pool
 	{
-	public:
 		// Creates a thread pool with no threads.
 		thread_pool();
 		
