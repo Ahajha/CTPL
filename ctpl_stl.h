@@ -106,7 +106,8 @@ namespace ctpl
 		// when it is ready or manage any caught exceptions.
 		template<typename F, typename... Rest>
 			requires std::invocable<F,int,Rest...>
-		auto push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))>;
+		std::future<std::invoke_result_t<F,int,Rest...>>
+			push(F && f, Rest&&... rest);
 		
 	private:
 		// Copying or moving a thread pool doesn't make

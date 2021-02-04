@@ -195,9 +195,11 @@ void thread_pool::stop(bool finish)
 
 template<typename F, typename... Rest>
 	requires std::invocable<F,int,Rest...>
-auto thread_pool::push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))>
+std::future<std::invoke_result_t<F,int,Rest...>>
+	thread_pool::push(F && f, Rest&&... rest)
 {
-	auto pck = std::make_shared<std::packaged_task<decltype(f(0, rest...))(int)>>(
+	auto pck = std::make_shared<std::packaged_task<
+		std::invoke_result_t<F,int,Rest...>(int)>>(
 		// This has been tested to ensure perfect forwarding still occurs with
 		// the parameters captured by reference.
 		[&f,&rest...]
