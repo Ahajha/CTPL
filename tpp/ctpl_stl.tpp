@@ -242,12 +242,9 @@ std::future<std::invoke_result_t<F,int,Rest...>>
 
 void thread_pool::start_thread(int id)
 {
-	// A copy of the shared ptr to the flag, note this is captured
-	// by value by the lambda.
-	std::shared_ptr<std::atomic<bool>> stop_flag(this->stop_flags[id]);
-	
-	// The main loop for the thread.
-	auto loop = [this, id, stop_flag]()
+	// The main loop for the thread. Grabs a copy of the pointer
+	// to the stop flag.
+	auto loop = [this, id, stop_flag = this->stop_flags[id]]()
 	{
 		std::atomic<bool> & stop = *stop_flag;
 		
