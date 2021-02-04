@@ -109,14 +109,14 @@ namespace ctpl
 		std::future<std::invoke_result_t<F,int,Rest...>>
 			push(F && f, Rest&&... rest);
 		
-	private:
 		// Copying or moving a thread pool doesn't make
 		// much sense, so disable those actions.
-		thread_pool(const thread_pool &);// = delete;
-		thread_pool(thread_pool &&);// = delete;
-		thread_pool & operator=(const thread_pool &);// = delete;
-		thread_pool & operator=(thread_pool &&);// = delete;
+		thread_pool(const thread_pool&) = delete;
+		thread_pool(thread_pool&&) = delete;
+		thread_pool& operator=(const thread_pool&) = delete;
+		thread_pool& operator=(thread_pool&&) = delete;
 		
+	private:
 		// Starts a thread at a given index into its main loop.
 		void start_thread(int id);
 		
