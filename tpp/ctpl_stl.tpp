@@ -75,7 +75,7 @@ std::size_t thread_pool::n_idle() const
 
 std::thread& thread_pool::get_thread(std::size_t id)
 {
-	return *this->threads[id];
+	return this->threads[id];
 }
 
 void thread_pool::resize(std::size_t n_threads)
@@ -89,15 +89,10 @@ void thread_pool::resize(std::size_t n_threads)
 	// If the number of threads stays the same or increases
 	if (old_n_threads <= n_threads)
 	{
-		// Add threads and flags
-		this->threads.resize(n_threads);
-		this->stop_flags.resize(n_threads);
-		
 		// Start up all threads into their main loops.
-		for (std::size_t i = old_n_threads; i < n_threads; ++i)
+		while (this->threads.size() < n_threads)
 		{
-			this->stop_flags[i] = std::make_shared<std::atomic<bool>>(false);
-			this->start_thread(i);
+			this->emplace_thread();
 		}
 	}
 	else // the number of threads is decreased
@@ -109,7 +104,7 @@ void thread_pool::resize(std::size_t n_threads)
 			// (if it has one) and stop. Detach the thread, since
 			// there is no need to wait for it to finish (join).
 			*this->stop_flags[i] = true;
-			this->threads[i]->detach();
+			this->threads[i].detach();
 		}
 		{
 			// Stop any detached threads that were waiting.
@@ -179,8 +174,8 @@ void thread_pool::stop(bool finish)
 	// Wait for the computing threads to finish
 	for (auto& thr : this->threads)
 	{
-		if (thr->joinable())
-			thr->join();
+		if (thr.joinable())
+			thr.join();
 	}
 	
 	// Release all resources.
@@ -233,11 +228,15 @@ std::future<std::invoke_result_t<F,int,Rest...>>
 	return pck->get_future();
 }
 
-void thread_pool::start_thread(int id)
+void thread_pool::emplace_thread()
 {
+	const int id = static_cast<int>(this->threads.size());
+	
+	this->stop_flags.emplace_back(std::make_shared<std::atomic<bool>>(false));
+	
 	// The main loop for the thread. Grabs a copy of the pointer
 	// to the stop flag.
-	auto loop = [this, id, stop_flag = this->stop_flags[id]]()
+	this->threads.emplace_back([this, id, stop_flag = this->stop_flags[id]]
 	{
 		std::atomic<bool> & stop = *stop_flag;
 		
@@ -291,8 +290,5 @@ void thread_pool::start_thread(int id)
 			// that means the thread was told to stop, so stop.
 			if (!has_new_task) return;
 		}
-	};
-	// Compilers (at the time the code was written)
-	// may not support std::make_unique().
-	this->threads[id].reset(new std::thread(loop));
+	});
 }

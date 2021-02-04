@@ -78,7 +78,8 @@ namespace ctpl
 		// Returns the number of idle threads.
 		std::size_t n_idle() const;
 		
-		// Returns a reference to the thread with a given ID.
+		// Returns a reference to the thread with a given ID. Reference is
+		// invalidated if the pool is resized to n_threads <= id.
 		std::thread& get_thread(std::size_t id);
 		
 		// Changes the number of threads in the pool. Should be called
@@ -120,13 +121,13 @@ namespace ctpl
 		
 	private:
 		// Starts a thread at a given index into its main loop.
-		void start_thread(int id);
+		void emplace_thread();
 		
 		// Vector of threads and their stop flags. The stop flags
 		// start false, and should be set to true if the thread at
 		// the same index should be commanded to stop. These vectors
 		// should be the same size at all times, sans during resizing.
-		std::vector<std::unique_ptr<std::thread>> threads;
+		std::vector<std::thread> threads;
 		std::vector<std::shared_ptr<std::atomic<bool>>> stop_flags;
 		
 		// Queue of tasks to be completed. Note that this queue is managed
