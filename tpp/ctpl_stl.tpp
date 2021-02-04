@@ -194,6 +194,7 @@ template<typename F, typename... Rest>
 std::future<std::invoke_result_t<F,int,Rest...>>
 	thread_pool::push(F && f, Rest&&... rest)
 {
+	// std::packaged_task is used to get a future out of the function call.
 	auto pck = std::make_shared<std::packaged_task<
 		std::invoke_result_t<F,int,Rest...>(int)>>(
 		// This has been tested to ensure perfect forwarding still occurs with
@@ -211,7 +212,6 @@ std::future<std::invoke_result_t<F,int,Rest...>>
 				// forwarding of rvalues where necessary.
 				// std::bind is used to make a function with 1 argument (int id)
 				//     that simulates calling f with its respective arguments.
-				// std::packaged_task is used to get a future out of the function call.
 				return std::bind(std::forward<F>(f),
 					std::placeholders::_1, std::forward<Rest>(rest)...);
 			}
