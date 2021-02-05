@@ -125,12 +125,10 @@ namespace ctpl
 		// The number of currently idle threads.
 		std::atomic<std::size_t> _n_idle;
 		
-		// Mutex used for most atomic operations in the thread pool, other than
-		// those related to the task queue.
-		std::mutex mut;
-		
-		// Used for waking up threads that are waiting for tasks.
+		// Used for waking up threads that are waiting for tasks, mutex is
+		// specifically used to guard 'signal'.
 		std::condition_variable signal;
+		std::mutex signal_mut;
 	};
 
 #include "tpp/ctpl_stl.tpp"
