@@ -81,7 +81,7 @@ namespace ctpl
 		
 		// Changes the number of threads in the pool. Should be called
 		// from one thread, otherwise be careful to not interleave with
-		// this or this->stop(). Requires n_threads >= 0.
+		// this or this->stop().
 		void resize(std::size_t n_threads);
 		
 		// Clears the task queue.
