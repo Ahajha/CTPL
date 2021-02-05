@@ -5,22 +5,22 @@
 
 std::mutex iomut;
 
-void f1(int id)
+void f1()
 {
 	std::lock_guard<std::mutex> lock(iomut);
-	std::cout << "f1, thread #" << id << '\n';
+	std::cout << "f1\n";
 }
 
-void f2(int id, int par)
+void f2(int par)
 {
 	std::lock_guard<std::mutex> lock(iomut);
-	std::cout << "f2, thread #" << id << ", parameter " << par <<'\n';
+	std::cout << "f2, parameter " << par << '\n';
 }
 
-void f3(int id, const std::string & s)
+void f3(const std::string & s)
 {
 	std::lock_guard<std::mutex> lock(iomut);
-	std::cout << "f3, thread #" << id << ", '" << s << "'\n";
+	std::cout << "f3, '" << s << "'\n";
 }
 
 template<class T>
@@ -68,24 +68,24 @@ struct S1
 		std::cout << "S1 dtor\n";
 	}
 	
-	void operator()(int id) const
+	void operator()() const
 	{
 		std::lock_guard<std::mutex> lock(iomut);
-		std::cout << "S1 functor, thread #" << id << ", val = " << val << '\n';
+		std::cout << "S1 functor, val = " << val << '\n';
 	}
 };
 
-void f4(int id, S1<int>& s)
+void f4(S1<int>& s)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 	std::lock_guard<std::mutex> lock(iomut);
-	std::cout << "f4, thread #" << id << ", parameter S1 = " << s.val << '\n';
+	std::cout << "f4, parameter S1 = " << s.val << '\n';
 }
 
-void f5(int id, S1<int> s)
+void f5(S1<int> s)
 {
 	std::lock_guard<std::mutex> lock(iomut);
-	std::cout << "f5, thread #" << id << ", parameter S1 = " << s.val << '\n';
+	std::cout << "f5, parameter S1 = " << s.val << '\n';
 }
 
 int main()
@@ -133,11 +133,11 @@ int main()
 				std::lock_guard<std::mutex> lock(iomut);
 				std::cout << "pushing lambda #" << i << '\n';
 			}
-			p.push([s](int id)
+			p.push([s]
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 				std::lock_guard<std::mutex> lock(iomut);
-				std::cout << "lambda, thread #" << id << ' ' << s << '\n';
+				std::cout << s << '\n';
 			});
 		}
 	}
@@ -153,7 +153,7 @@ int main()
 		std::cout << "Testing future returns\n";
 	}
 	{
-		auto f1 = p.push([](int) { return 5; });
+		auto f1 = p.push([]{ return 5; });
 		
 		auto result = f1.get();
 		
@@ -166,7 +166,7 @@ int main()
 		std::cout << "Testing future exception catching\n";
 	}
 	{
-		auto f2 = p.push([](int) { throw std::exception(); });
+		auto f2 = p.push([]{ throw std::exception(); });
 			
 		try
 		{

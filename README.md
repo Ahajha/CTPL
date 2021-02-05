@@ -79,6 +79,7 @@ Modifies the implementation of the library, very minor changes to the interface 
 Breaking changes will be made here. Thus far:
 - The pop() and get_thread() methods have been removed, there does not seem to be a good reason to use them in my opinion (especially get_thread()).
 - The default constructor creates a number of threads equal to the number of hardware threads, this is much more useful than a 0-thread pool.
+- The requirement for the first argument to be an `int` has been dropped. Unfortunately, the pool can only support one or the other (without massive complications), so this will likely break a lot of pre-existing code, however, I believe this to be a worthy break.
 
 This README is only updated in this branch.
 

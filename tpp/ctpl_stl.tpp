@@ -169,19 +169,17 @@ void thread_pool::stop(bool finish)
 	this->stop_flags.clear();
 }
 
-template<typename F, typename... Rest>
-	requires std::invocable<F,int,Rest...>
-std::future<std::invoke_result_t<F,int,Rest...>>
-	thread_pool::push(F && f, Rest&&... rest)
+template<typename F, typename... Args>
+	requires std::invocable<F,Args...>
+std::future<std::invoke_result_t<F,Args...>> thread_pool::push(F && f, Args&&... args)
 {
 	// std::packaged_task is used to get a future out of the function call.
-	auto pck = std::make_shared<std::packaged_task<
-		std::invoke_result_t<F,int,Rest...>(int)>>(
+	auto pck = std::make_shared<std::packaged_task<std::invoke_result_t<F,Args...>()>>(
 		// This has been tested to ensure perfect forwarding still occurs with
 		// the parameters captured by reference.
-		[&f,&rest...]
+		[&f,&args...]
 		{
-			if constexpr (sizeof...(rest) == 0)
+			if constexpr (sizeof...(args) == 0)
 			{
 				// Only need to forward the function.
 				return std::forward<F>(f);
@@ -189,19 +187,18 @@ std::future<std::invoke_result_t<F,int,Rest...>>
 			else
 			{
 				// std::forward is used to ensure perfect
-				// forwarding of rvalues where necessary.
-				// std::bind is used to make a function with 1 argument (int id)
+				//     forwarding of rvalues where necessary.
+				// std::bind is used to make a parameterless function
 				//     that simulates calling f with its respective arguments.
-				return std::bind(std::forward<F>(f),
-					std::placeholders::_1, std::forward<Rest>(rest)...);
+				return std::bind(std::forward<F>(f), std::forward<Args>(args)...);
 			}
 		}()
 	);
 	
 	// Lastly, create a function that wraps the packaged
-	// task into a signature of void(int).
-	this->tasks.push(std::make_unique<std::function<void(int)>>
-		([pck](int id) { (*pck)(id); })
+	// task into a signature of void().
+	this->tasks.push(std::make_unique<std::function<void()>>(
+		[pck]{ (*pck)(); })
 	);
 	
 	// Notify one waiting thread so it can wake up and take this new task.
@@ -215,18 +212,16 @@ std::future<std::invoke_result_t<F,int,Rest...>>
 
 void thread_pool::emplace_thread()
 {
-	const int id = static_cast<int>(this->threads.size());
-	
 	this->stop_flags.emplace_back(std::make_shared<std::atomic<bool>>(false));
 	
 	// The main loop for the thread. Grabs a copy of the pointer
 	// to the stop flag.
-	this->threads.emplace_back([this, id, stop_flag = this->stop_flags[id]]
+	this->threads.emplace_back([this, stop_flag = this->stop_flags.back()]
 	{
 		std::atomic<bool> & stop = *stop_flag;
 		
 		// Used to store new tasks.
-		std::unique_ptr<std::function<void(int id)>> task;
+		std::unique_ptr<std::function<void()>> task;
 		
 		// True if 'task' currently has a runnable task in it.
 		bool has_new_task = this->tasks.pop(task);
@@ -236,7 +231,7 @@ void thread_pool::emplace_thread()
 			while (has_new_task)
 			{
 				// Run the task
-				(*task)(id);
+				(*task)();
 				
 				// Delete the task
 				task.reset();

@@ -90,10 +90,9 @@ namespace ctpl
 		// arguments must be supplied to the call to push. Returns the future
 		// result of the function call, which allows the user to get the result
 		// when it is ready or manage any caught exceptions.
-		template<typename F, typename... Rest>
-			requires std::invocable<F,int,Rest...>
-		std::future<std::invoke_result_t<F,int,Rest...>>
-			push(F && f, Rest&&... rest);
+		template<typename F, typename... Args>
+			requires std::invocable<F,Args...>
+		std::future<std::invoke_result_t<F,Args...>> push(F && f, Args&&... args);
 		
 		// Copying or moving a thread pool doesn't make
 		// much sense, so disable those actions.
@@ -116,7 +115,7 @@ namespace ctpl
 		// Queue of tasks to be completed. Note that this queue is managed
 		// by a different mutex than the one used by all other thread pool
 		// actions.
-		detail::atomic_queue<std::unique_ptr<std::function<void(int id)>>> tasks;
+		detail::atomic_queue<std::unique_ptr<std::function<void()>>> tasks;
 		
 		// 'Done' is true if this->stop(true) has been called, signals
 		// for waiting threads to stop waiting for new jobs.
