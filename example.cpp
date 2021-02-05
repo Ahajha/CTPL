@@ -50,7 +50,8 @@ struct S1
 	{
 		val = c.val;
 		std::lock_guard<std::mutex> lock(iomut);
-		std::cout << "S1 move assign\n"; return *this;
+		std::cout << "S1 move assign\n";
+		return *this;
 	}
 	
 	S1& operator=(const S1& c)
@@ -60,6 +61,7 @@ struct S1
 		std::cout << "S1 copy assign\n";
 		return *this;
 	}
+	
 	~S1()
 	{
 		std::lock_guard<std::mutex> lock(iomut);
@@ -73,7 +75,7 @@ struct S1
 	}
 };
 
-void f4(int id, S1<int> & s)
+void f4(int id, S1<int>& s)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 	std::lock_guard<std::mutex> lock(iomut);
@@ -170,7 +172,7 @@ int main(int argc, char **argv)
 		{
 			f2.get();
 		}
-		catch (std::exception & e)
+		catch (std::exception& e)
 		{
 			std::lock_guard<std::mutex> lock(iomut);
 			std::cout << "caught exception\n";
