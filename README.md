@@ -17,7 +17,7 @@ Features:
 - Uses std::futures to get returned value or thrown exceptions
 - Use for any purpose under Apache license
 
-Sample usage (more examples in example.cpp)
+### Sample usage (more examples in example.cpp)
 
 ```C++
 #include <iostream>
@@ -60,3 +60,21 @@ int main ()
     });
 }
 ```
+
+### Different branches
+The branches were made sequentially, with each modifying specific pieces of the library.
+
+#### reorganization
+Separates the implementation from the header for a cleaner to read interface.
+
+#### documentation
+Documents how the entire library works. This and reorganization do not modify any original code, other than some variable names.
+
+#### reimplementation
+Modifies the implementation of the library, very minor changes to the interface (adding const, changing some `int`s to `std::size_t` in parameters and return types). One minor bug was fixed, the issue is described here: https://github.com/vit-vit/CTPL/issues/32. This is the last branch to remain (mostly) compatible with the original version.
+
+#### finalization (default)
+Breaking changes will be made here. Thus far:
+- The pop() and get_thread() methods have been removed, there does not seem to be a good reason to use them in my opinion (especially get_thread()).
+- The default constructor creates a number of threads equal to the number of hardware threads, this is much more useful than a 0-thread pool.
+This README is only updated in this branch.
