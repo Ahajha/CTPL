@@ -87,10 +87,6 @@ namespace ctpl
 		// Clears the task queue.
 		void clear_queue();
 		
-		// Pops the next task in the queue, wrapped as a function with
-		// signature void(int), which expects the thread ID as an argument.
-		std::function<void(int)> pop();
-		
 		// Wait for all computing threads to finish, stops all threads, and
 		// releases all resources. May be called asynchronously to not pause
 		// the calling thread while waiting. If finish == true, all the tasks

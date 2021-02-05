@@ -127,15 +127,6 @@ void thread_pool::clear_queue()
 	this->tasks.clear();
 }
 
-std::function<void(int)> thread_pool::pop()
-{
-	std::unique_ptr<std::function<void(int id)>> func;
-	
-	// Returns by value, so copies and deletes the heap allocated function,
-	// if there is one in the queue.
-	return this->tasks.pop(func) ? *func : std::function<void(int)>{};
-}
-
 void thread_pool::stop(bool finish)
 {
 	// Force the threads to stop
