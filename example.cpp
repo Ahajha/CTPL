@@ -88,7 +88,7 @@ void f5(int id, S1<int> s)
 	std::cout << "f5, thread #" << id << ", parameter S1 = " << s.val << '\n';
 }
 
-int main(int argc, char **argv)
+int main()
 {
 	// Create pool with 4 threads
 	ctpl::thread_pool p(4);
