@@ -11,17 +11,11 @@ More specifically, there are some threads dedicated to the pool and a container 
 A thread pool is helpful when you want to minimize time of loading and destroying threads and when you want to limit the number of parallel jobs that run simultanuasly. For example, time consuming event handlers may be processed in a thread pool to make UI more responsive.
 
 Features:
-- standard c++ language, tested to compile on MS Visual Studio 2013 (2012?), gcc 4.8.2 and mingw 4.8.1(with posix threads)
-- simple but effiecient solution, one header only, no need to compile a binary library
-- query the number of idle threads and resize the pool dynamically
-- one API to push to the thread pool any collable object: lambdas, functors, functions, result of bind expression
-- collable objects with variadic number of parameters plus index of the thread running the object
-- automatic template argument deduction
-- get returned value of any type with standard c++ futures
-- get fired exceptions with standard c++ futures
-- use for any purpose under Apache license
-- two variants, one depends on Boost Lockfree Queue library, http://boost.org, which is a header only library
-
+- Standard C++, tested to compile with no warnings (-Wall -Wextra -Wpedantic) on g++ 10.2.0.
+- Header only
+- Can push any callable object: functions, functors, and lambdas
+- Uses std::futures to get returned value or thrown exceptions
+- Use for any purpose under Apache license
 
 Sample usage (more examples in example.cpp)
 
