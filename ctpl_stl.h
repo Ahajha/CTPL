@@ -75,10 +75,6 @@ namespace ctpl
 		// Returns the number of idle threads.
 		std::size_t n_idle() const;
 		
-		// Returns a reference to the thread with a given ID. Reference is
-		// invalidated if the pool is resized to n_threads <= id.
-		std::thread& get_thread(std::size_t id);
-		
 		// Changes the number of threads in the pool. Should be called
 		// from one thread, otherwise be careful to not interleave with
 		// this or this->stop().

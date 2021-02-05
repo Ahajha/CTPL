@@ -73,11 +73,6 @@ std::size_t thread_pool::n_idle() const
 	return this->_n_idle;
 }
 
-std::thread& thread_pool::get_thread(std::size_t id)
-{
-	return this->threads[id];
-}
-
 void thread_pool::resize(std::size_t n_threads)
 {
 	// One of these will be true if this->stop() has been called,
