@@ -90,8 +90,8 @@ void f5(S1<int> s)
 
 int main()
 {
-	// Create pool with 4 threads
-	ctpl::thread_pool p(4);
+	// Create pool using all hardware threads
+	ctpl::thread_pool p;
 	
 	{
 		std::lock_guard<std::mutex> lock(iomut);
@@ -146,7 +146,7 @@ int main()
 		std::lock_guard<std::mutex> lock(iomut);
 		std::cout << "Resizing the pool\n";
 	}
-	p.resize(8);
+	p.resize(4);
 	
 	{
 		std::lock_guard<std::mutex> lock(iomut);
