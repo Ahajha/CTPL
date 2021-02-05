@@ -77,6 +77,10 @@ namespace ctpl
 		// Clears the task queue.
 		void clear_queue();
 		
+		// Waits for all tasks to be complete and all threads idling. Only use
+		// this if there will certainly be a point where all tasks are finished.
+		void wait();
+		
 		// Wait for all computing threads to finish, stops all threads, and
 		// releases all resources. May be called asynchronously to not pause
 		// the calling thread while waiting. If finish == true, all the tasks
@@ -125,10 +129,13 @@ namespace ctpl
 		// The number of currently idle threads.
 		std::atomic<std::size_t> _n_idle;
 		
-		// Used for waking up threads that are waiting for tasks, mutex is
-		// specifically used to guard 'signal'.
-		std::condition_variable signal;
-		std::mutex signal_mut;
+		// Signal and its mutex are used for waking up
+		//     threads that are waiting for tasks.
+		// Waiter and its mutex are used for the wait() method,
+		// it is used to signal anything waiting in wait() once all
+		// threads reach an idle state.
+		std::condition_variable signal, waiter;
+		std::mutex signal_mut, waiter_mut;
 	};
 
 #include "tpp/ctpl_stl.tpp"

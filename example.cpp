@@ -144,6 +144,17 @@ int main()
 	
 	{
 		std::lock_guard<std::mutex> lock(iomut);
+		std::cout << "Waiting for all lambda tasks to finish...\n";
+	}
+	
+	p.wait();
+	
+	// Note that this doesn't need to be guarded,
+	// since no threads have any tasks now.
+	std::cout << "All threads are now idle.\n";
+	
+	{
+		std::lock_guard<std::mutex> lock(iomut);
 		std::cout << "Resizing the pool\n";
 	}
 	p.resize(4);

@@ -121,6 +121,12 @@ void thread_pool::clear_queue()
 	this->tasks.clear();
 }
 
+void thread_pool::wait()
+{
+	std::unique_lock<std::mutex> lock(this->waiter_mut);
+	waiter.wait(lock);
+}
+
 void thread_pool::stop(bool finish)
 {
 	// Force the threads to stop
@@ -243,11 +249,18 @@ void thread_pool::emplace_thread()
 				// Get a new task
 				has_new_task = this->tasks.pop(task);
 			}
+			
 			// At this point the queue has run out of tasks, wait here for more.
-			std::unique_lock<std::mutex> lock(this->signal_mut);
 			
 			// Thread is now idle.
-			++this->_n_idle;
+			// If all threads are idle, notify any waiting in wait().
+			if (++this->_n_idle == this->size())
+			{
+				std::lock_guard<std::mutex> lock(this->waiter_mut);
+				this->waiter.notify_all();
+			}
+			
+			std::unique_lock<std::mutex> lock(this->signal_mut);
 			
 			// While the following evaluates to true, wait for a signal.
 			this->signal.wait(lock, [this, &task, &has_new_task, &stop]()
