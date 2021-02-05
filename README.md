@@ -60,6 +60,9 @@ int main ()
 }
 ```
 
+#### Note:
+The STL version is the only one that has been modified from the original. The Boost version is kept only for completeness. I may make similar modifications to that version, however, Boost has its own thread pool library, and it seems a little redundant if you're using Boost anyway. (Though if specifically requested, I should be able to make the required modifications): https://www.boost.org/doc/libs/1_75_0/doc/html/boost_asio/reference/thread_pool.html.
+
 ### Different branches
 The branches were made sequentially, with each modifying specific pieces of the library.
 
@@ -78,3 +81,6 @@ Breaking changes will be made here. Thus far:
 - The default constructor creates a number of threads equal to the number of hardware threads, this is much more useful than a 0-thread pool.
 
 This README is only updated in this branch.
+
+### Final Thoughts:
+It definitely needs to be pointed out that this is a fork, not an original library of mine. Most of the code is original or very similar to vit-vit's original version, of course as mentioned there were modifications. The library at the time was very useful to many people, myself included, and I wanted to breathe some new life into it, after the project was seemingly abandoned.
