@@ -103,7 +103,7 @@ void thread_pool::resize(std::size_t n_threads)
 		{
 			// Stop any detached threads that were waiting.
 			// All other detached threads will eventually stop.
-			std::lock_guard<std::mutex> lock(this->mut);
+			std::lock_guard<std::mutex> lock(this->signal_mut);
 			this->signal.notify_all();
 		}
 		
@@ -152,7 +152,7 @@ void thread_pool::stop(bool finish)
 	}
 	{
 		// Stop all waiting threads
-		std::lock_guard<std::mutex> lock(this->mut);
+		std::lock_guard<std::mutex> lock(this->signal_mut);
 		this->signal.notify_all();
 	}
 	
@@ -202,7 +202,7 @@ std::future<std::invoke_result_t<F,Args...>> thread_pool::push(F && f, Args&&...
 	);
 	
 	// Notify one waiting thread so it can wake up and take this new task.
-	std::lock_guard<std::mutex> lock(this->mut);
+	std::lock_guard<std::mutex> lock(this->signal_mut);
 	this->signal.notify_one();
 	
 	// Return the future, the user is now responsible
@@ -244,7 +244,7 @@ void thread_pool::emplace_thread()
 				has_new_task = this->tasks.pop(task);
 			}
 			// At this point the queue has run out of tasks, wait here for more.
-			std::unique_lock<std::mutex> lock(this->mut);
+			std::unique_lock<std::mutex> lock(this->signal_mut);
 			
 			// Thread is now idle.
 			++this->_n_idle;
