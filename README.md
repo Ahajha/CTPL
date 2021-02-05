@@ -24,18 +24,18 @@ Features:
 
 std::mutex iomut;
 
-void f1(int id)
+void f1()
 {
     std::lock_guard<std::mutex> lock(iomut);
-    std::cout << "f1, thread #" << id << '\n';
+    std::cout << "f1\n";
 }
 
 struct S1
 {
-    void operator()(int id, const std::string& str) const
+    void operator()(const std::string& str) const
     {
         std::lock_guard<std::mutex> lock(iomut);
-        std::cout << "S1, thread #" << id << ", str = " << str << '\n';
+        std::cout << "S1, str = " << str << '\n';
     }
 } s1;
 
@@ -52,10 +52,10 @@ int main ()
     p.push(s1, "Hello World!");
     
     // And lambdas
-    p.push([](int id)
+    p.push([]()
     {
         std::lock_guard<std::mutex> lock(iomut);
-        std::cout << "lambda, thread #" << id << '\n';
+        std::cout << "lambda\n";
     });
 }
 ```

@@ -85,11 +85,9 @@ namespace ctpl
 		// removed. Note that the pool does not support being restarted.
 		void stop(bool finish = false);
 		
-		// Pushes a function and its arguments to the task queue. The function
-		// must accept an int as its first argument, the thread ID, all other
-		// arguments must be supplied to the call to push. Returns the future
-		// result of the function call, which allows the user to get the result
-		// when it is ready or manage any caught exceptions.
+		// Pushes a function and its arguments to the task queue. Returns the
+		// future result of the function call, which allows the user to get the
+		// result when it is ready or manage any caught exceptions.
 		template<typename F, typename... Args>
 			requires std::invocable<F,Args...>
 		std::future<std::invoke_result_t<F,Args...>> push(F && f, Args&&... args);
