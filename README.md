@@ -3,12 +3,11 @@ CTPL
 
 Modern and efficient C++ Thread Pool Library
 
-
 A thread pool is a programming pattern for parallel execution of jobs, http://en.wikipedia.org/wiki/Thread_pool_pattern.
 
 More specifically, there are some threads dedicated to the pool and a container of jobs. The jobs come to the pool dynamically. A job is fetched and deleted from the container when there is an idle thread. The job is then run on that thread.
 
-A thread pool is helpful when you want to minimize time of loading and destroying threads and when you want to limit the number of parallel jobs that run simultanuasly. For example, time consuming event handlers may be processed in a thread pool to make UI more responsive.
+A thread pool is helpful when you want to minimize time of loading and destroying threads and when you want to limit the number of parallel jobs that run simultaneously. For example, time consuming event handlers may be processed in a thread pool to make UI more responsive.
 
 Features:
 - C++20, tested to compile with no warnings (-Wall -Wextra -Wpedantic) on g++ 10.2.0.
