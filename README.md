@@ -23,37 +23,46 @@ Features:
 - two variants, one depends on Boost Lockfree Queue library, http://boost.org, which is a header only library
 
 
-Sample usage
+Sample usage (more examples in example.cpp)
 
-<code>void first(int id) {
-    std::cout << "hello from " << id << '\n';
-}</code>
+```C++
+#include <iostream>
+#include <ctpl_stl>
 
-<code>&#32;&#32;struct Second {
-    void operator()(int id) const {
-        std::cout << "hello from " << id << '\n';
+std::mutex iomut;
+
+void f1(int id)
+{
+    std::lock_guard<std::mutex> lock(iomut);
+    std::cout << "f1, thread #" << id << '\n';
+}
+
+struct S1
+{
+    void operator()(int id, const std::string& str) const
+    {
+        std::lock_guard<std::mutex> lock(iomut);
+        std::cout << "S1, thread #" << id << ", str = " << str << '\n';
     }
-} second;
+} s1;
 
-<code>void third(int id, const std::string & additional_param) {}</code>
-
-
-<code>int main () {</code>
-
-<code>&#32;&#32;&#32;&#32;ctpl::thread_pool p(2 /* two threads in the pool */);</code>
-
-<code>&#32;&#32;&#32;&#32;p.push(first);  // function</code>
-
-<code>&#32;&#32;&#32;&#32;p.push(third, "additional_param");</code>
-
-<code>&#32;&#32;&#32;&#32;p.push( &#91;&#93; (int id){
-  std::cout << "hello from " << id << '\n';
-});  // lambda</code>
-
-<code>&#32;&#32;&#32;&#32;p.push(std::ref(second));  // functor, reference</code>
-
-<code>&#32;&#32;&#32;&#32;p.push(const_cast&#60;const Second &&#62;(second));  // functor, copy ctor</code>
-
-<code>&#32;&#32;&#32;&#32;p.push(std::move(second));  // functor, move ctor</code>
-
-<code>}</code>
+int main ()
+{
+    // Automatically determines number of threads based on hardware, can be
+    // manually specified if desired.
+    ctpl::thread_pool p;
+    
+    // Can push functions
+    p.push(f1);
+    
+    // Functors
+    p.push(s1, "Hello World!");
+    
+    // And lambdas
+    p.push([](int id)
+    {
+        std::lock_guard<std::mutex> lock(iomut);
+        std::cout << "lambda, thread #" << id << '\n';
+    });
+}
+```
