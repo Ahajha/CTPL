@@ -11,7 +11,7 @@ More specifically, there are some threads dedicated to the pool and a container 
 A thread pool is helpful when you want to minimize time of loading and destroying threads and when you want to limit the number of parallel jobs that run simultanuasly. For example, time consuming event handlers may be processed in a thread pool to make UI more responsive.
 
 Features:
-- Standard C++, tested to compile with no warnings (-Wall -Wextra -Wpedantic) on g++ 10.2.0.
+- C++20, tested to compile with no warnings (-Wall -Wextra -Wpedantic) on g++ 10.2.0.
 - Header only
 - Can push any callable object: functions, functors, and lambdas
 - Uses std::futures to get returned value or thrown exceptions
