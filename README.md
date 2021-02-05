@@ -12,8 +12,10 @@ A thread pool is helpful when you want to minimize time of loading and destroyin
 Features:
 - C++20, tested to compile with no warnings (-Wall -Wextra -Wpedantic) on g++ 10.2.0.
 - Header only
+- By default uses all available hardware threads
 - Can push any callable object: functions, functors, and lambdas
 - Uses std::futures to get returned value or thrown exceptions
+- Can wait for all tasks to finish, and continue using the pool afterwards
 - Use for any purpose under Apache license
 
 ### Sample usage (more examples in example.cpp)
