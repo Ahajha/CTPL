@@ -20,7 +20,7 @@
 template <typename T>
 bool detail::atomic_queue<T>::push(T&& value)
 {
-	std::lock_guard<std::mutex> lock(this->mut);
+	std::lock_guard lock(this->mut);
 	this->q.push(std::forward<T>(value));
 	return true;
 }
@@ -28,7 +28,7 @@ bool detail::atomic_queue<T>::push(T&& value)
 template <typename T>
 bool detail::atomic_queue<T>::pop(T & value)
 {
-	std::lock_guard<std::mutex> lock(this->mut);
+	std::lock_guard lock(this->mut);
 	if (this->q.empty())
 		return false;
 	value = std::move(this->q.front());
@@ -39,14 +39,14 @@ bool detail::atomic_queue<T>::pop(T & value)
 template <typename T>
 bool detail::atomic_queue<T>::empty() const
 {
-	std::lock_guard<std::mutex> lock(this->mut);
+	std::lock_guard lock(this->mut);
 	return this->q.empty();
 }
 
 template <typename T>
 void detail::atomic_queue<T>::clear()
 {
-	std::lock_guard<std::mutex> lock(this->mut);
+	std::lock_guard lock(this->mut);
 	while (!this->q.empty()) this->q.pop();
 }
 
@@ -103,7 +103,7 @@ void thread_pool::resize(std::size_t n_threads)
 		{
 			// Stop any detached threads that were waiting.
 			// All other detached threads will eventually stop.
-			std::lock_guard<std::mutex> lock(this->signal_mut);
+			std::lock_guard lock(this->signal_mut);
 			this->signal.notify_all();
 		}
 		
@@ -123,7 +123,7 @@ void thread_pool::clear_queue()
 
 void thread_pool::wait()
 {
-	std::unique_lock<std::mutex> lock(this->waiter_mut);
+	std::unique_lock lock(this->waiter_mut);
 	waiter.wait(lock);
 }
 
@@ -158,7 +158,7 @@ void thread_pool::stop(bool finish)
 	}
 	{
 		// Stop all waiting threads
-		std::lock_guard<std::mutex> lock(this->signal_mut);
+		std::lock_guard lock(this->signal_mut);
 		this->signal.notify_all();
 	}
 	
@@ -208,7 +208,7 @@ std::future<std::invoke_result_t<F,Args...>> thread_pool::push(F && f, Args&&...
 	);
 	
 	// Notify one waiting thread so it can wake up and take this new task.
-	std::lock_guard<std::mutex> lock(this->signal_mut);
+	std::lock_guard lock(this->signal_mut);
 	this->signal.notify_one();
 	
 	// Return the future, the user is now responsible
@@ -256,11 +256,11 @@ void thread_pool::emplace_thread()
 			// If all threads are idle, notify any waiting in wait().
 			if (++this->_n_idle == this->size())
 			{
-				std::lock_guard<std::mutex> lock(this->waiter_mut);
+				std::lock_guard lock(this->waiter_mut);
 				this->waiter.notify_all();
 			}
 			
-			std::unique_lock<std::mutex> lock(this->signal_mut);
+			std::unique_lock lock(this->signal_mut);
 			
 			// While the following evaluates to true, wait for a signal.
 			this->signal.wait(lock, [this, &task, &has_new_task, &stop]()
