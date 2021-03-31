@@ -133,7 +133,7 @@ void thread_pool::stop(bool finish)
 	if (!finish)
 	{
 		// If this->stop(false) has already been called, no need to stop again.
-		// If this->stop(true) has alredy been called, still continue, as this
+		// If this->stop(true) has already been called, still continue, as this
 		// will stop the completion of the rest of the tasks in the queue.
 		if (this->stopped) return;
 		
